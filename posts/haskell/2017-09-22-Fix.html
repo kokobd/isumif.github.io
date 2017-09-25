@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>My Hakyll Blog - fix and MonadFix in Haskell</title>
+        <title>My Hakyll Blog - fix and RecursiveDo in Haskell</title>
         <link rel="stylesheet" href="../../css/default.css" />
     </head>
     <body>
@@ -21,14 +21,15 @@
         </header>
 
         <main role="main">
-            <h1>fix and MonadFix in Haskell</h1>
+            <h1>fix and RecursiveDo in Haskell</h1>
             <article>
     <section class="header">
         Posted on September 22, 2017
         
     </section>
     <section>
-        <p>这里我们主要介绍<code>fix</code>,<code>MonadFix</code>与<code>mdo</code></p>
+        <p>关于这个主题的原始论文是<a href="http://leventerkok.github.io/papers/erkok-thesis.pdf">Value Recursion in Monadic Computations</a><br />
+这里我们简要介绍<code>fix</code>与<code>RecursiveDo</code></p>
 <h2 id="fix-函数"><code>fix</code> 函数</h2>
 <p><code>fix</code>函数的定义来自<code>Control.Monad.Fix</code>，这是它的定义：</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a
@@ -71,10 +72,11 @@ f a <span class="fu">=</span> <span class="kw">if</span> p a
 <p>与前面的递归定义比较，发现完全一致，这就表明递归定义可以转换为<code>fix</code>定义。另一方面， 由于<code>fix</code>本身是由递归定义的，所以<code>fix</code>定义也可以转换为递归定义。这就证明了两种定义方法 是等价的。因此理论上说我们可以在语言中放弃递归，转而提供<code>fix</code>作为最基本的语言特性</p>
 <h3 id="further-reading">Further Reading</h3>
 <p><a href="https://en.wikibooks.org/wiki/Haskell/Denotational_semantics">Denotational Semantics</a></p>
-<h2 id="monadfix">MonadFix</h2>
-<p>TODO</p>
 <h2 id="mdo"><code>mdo</code></h2>
-<p>TODO</p>
+<p>开启RecursiveDo语言扩展之后可以使用<code>mdo</code>和<code>rec</code>关键字。这两个关键字实现的功能是类似的， 我们这里使用<code>mdo</code></p>
+<p>在普通的do语法中，前一行不能引用后一行定义的变量。mdo解决的就是这个问题。如果一个单子同时也是<code>MonadFix</code>的实例，那么在<code>mdo</code>内，两行之间可以互相引用。需要确保的是这两处引用 不能都严格求值，否则将陷入死循环。</p>
+<p><code>mdo</code>语法糖是通过<code>MonadFix</code>实现的，想要详细了解实现原理，可以参考<br />
+<a href="https://elvishjerricco.github.io/2017/08/22/monadfix-is-time-travel.html">MonadFix is Time Travel</a></p>
     </section>
 </article>
 
