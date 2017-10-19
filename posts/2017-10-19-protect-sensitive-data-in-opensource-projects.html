@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>My Hakyll Blog - 保护开源项目中的敏感数据</title>
+        <link rel="stylesheet" href="../css/default.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">My Hakyll Blog</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>保护开源项目中的敏感数据</h1>
+            <article>
+    <section class="header">
+        Posted on October 19, 2017
+        
+    </section>
+    <section>
+        <h2 id="需求">需求</h2>
+<p>我们的一个项目中由于包含一段机密字符串，所以无法开源。现在希望在不公开这段字符串的前提下， 开源到GitHub，享受到<code>Travis CI</code>和<code>AppVeyor</code>对于开源项目提供的免费持续集成服务。</p>
+<p>具体来说，代码中存在这样一个常量</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">defIV ::</span> <span class="dt">B.ByteString</span>
+defIV <span class="fu">=</span> B.pack [<span class="dv">237</span>,<span class="dv">33</span>,<span class="dv">6</span>,<span class="dv">126</span>,<span class="dv">214</span>,<span class="dv">53</span>,<span class="dv">112</span>,<span class="dv">125</span>,<span class="dv">148</span>,<span class="dv">25</span>,<span class="dv">71</span>,<span class="dv">73</span>,<span class="dv">255</span>,<span class="dv">156</span>,<span class="dv">253</span>,<span class="dv">107</span>]</code></pre></div>
+<p>我们需要保证生产环境下使用的<code>defIV</code>值不被泄漏</p>
+<h2 id="解决方案">解决方案</h2>
+<h3 id="编译阶段确定defiv">编译阶段确定defIV</h3>
+<p>为了方便开发，项目中存放一个开发用的<code>defIV</code>值，这个值要和生产环境的<code>defIV</code>不同。<br />
+我们在cabal包描述中增加一个flag，用来区分环境，针对开发和生产编译出不同的二进制文件</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">flag production
+  default<span class="fu">:</span> <span class="dt">False</span></code></pre></div>
+<p>用stack构建项目时，添加参数<code>--flag our-package-name:production</code> 就可以将production设为True了</p>
+<p>然后，通过C预处理器把production传递给代码（这段放在<code>library</code>里面）</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">if</span> flag(production)
+  cpp<span class="fu">-</span>options<span class="fu">:</span>       <span class="fu">-</span><span class="dt">DPRODUCTION</span></code></pre></div>
+<p>代码中使用<code>configurator</code>库来读取配置文件。利用C预处理器来决定加载哪一个配置文件</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">#ifdef PRODUCTION</span>
+  <span class="st">&quot;config/cipher-production.cfg&quot;</span>
+<span class="ot">#else</span>
+  <span class="st">&quot;config/cipher.cfg&quot;</span>
+<span class="ot">#endif</span></code></pre></div>
+<p>两个配置文件中定义了同一个属性<code>iv</code>，但值不一样。<br />
+开发环境：<code>iv = &quot;[237,33,6,126,214,53,112,125,148,25,71,73,255,156,253,107]&quot;</code><br />
+生产环境：<code>iv = &quot;$(IV)&quot;\</code></p>
+<p>也就是说，编译生产环境用的程序时，我们会从环境变量<code>IV</code>中读取<code>iv</code>的值</p>
+<p><strong>这些配置文件必须在编译阶段读取</strong>，然后将内容注入代码。我们利用TemplateHaskell可以轻松实现</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">readDefIV ::</span> <span class="dt">Q</span> <span class="dt">Exp</span>
+readDefIV <span class="fu">=</span> <span class="kw">do</span>
+<span class="ot">  iv ::</span> [<span class="dt">Word8</span>] <span class="ot">&lt;-</span> runIO <span class="fu">$</span> <span class="kw">do</span>
+    cfg <span class="ot">&lt;-</span> load [<span class="dt">Required</span> cipherCfgPath]
+    read <span class="fu">&lt;$&gt;</span> require cfg <span class="st">&quot;iv&quot;</span>
+  return <span class="fu">$</span> <span class="dt">ListE</span> <span class="fu">$</span> fmap (<span class="dt">LitE</span> <span class="fu">.</span> <span class="dt">IntegerL</span> <span class="fu">.</span> fromIntegral) iv</code></pre></div>
+<p>原先的<code>defIV</code>，现在就变成了对<code>readDefIV</code>的拼接</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">defIV ::</span> <span class="dt">B.ByteString</span>
+defIV <span class="fu">=</span> B.pack <span class="fu">$</span>(readDefIV)</code></pre></div>
+<h3 id="production-build">production build</h3>
+<p>我们目前使用的持续集成服务是<code>Travis CI</code>和<code>AppVeyor</code>，分别针对linux和windows。 它们都支持加密一段敏感数据，具体使用方法参看它们的文档。</p>
+<p>这里以<code>Travis CI</code>为例。（我还没配<code>AppVeyor</code>）</p>
+<div class="sourceCode"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span class="fu">env:</span>
+  <span class="fu">global:</span>
+  <span class="kw">-</span> <span class="fu">secure:</span><span class="at"> </span><span class="co"># 一些密文，太长了所以略去</span></code></pre></div>
+<p>按照<code>Travis CI</code>文档里的说明，我们在<code>.travis.yml</code>加入了这样几行。<br />
+<code>Travis CI</code> 在构建我们的项目时，会解密这段密文，设置环境变量<code>IV</code>。<br />
+只有<code>Travis CI</code>才能解密这段密文，所以即使项目开源了，也没有人能看到这段密文对应的明文。</p>
+<p>再利用 <code>Travis CI</code> 提供的自动部署服务，我们可以把编译好的app自动部署到私有服务器上。</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
