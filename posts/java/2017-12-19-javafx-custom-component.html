@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>My Hakyll Blog - Creating Custom Components in JavaFX</title>
+        <link rel="stylesheet" href="../../css/default.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../../">My Hakyll Blog</a>
+            </div>
+            <nav>
+                <a href="../../">Home</a>
+                <a href="../../about.html">About</a>
+                <a href="../../contact.html">Contact</a>
+                <a href="../../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>Creating Custom Components in JavaFX</h1>
+            <article>
+    <section class="header">
+        Posted on December 19, 2017
+        
+    </section>
+    <section>
+        <h2 id="motivation">Motivation</h2>
+<p>Recently I’m using JavaFX to build a desktop GUI application. It took me some time to figure out how to split my GUI into components properly. Here is the final solution that works elegantly for me.</p>
+<h2 id="solution">Solution</h2>
+<p>According to <a href="https://docs.oracle.com/javase/8/javafx/api/javafx/fxml/doc-files/introduction_to_fxml.html#custom_components">Oracle’s reference</a>, we prepare a FXML file like this</p>
+<div class="sourceCode"><pre class="sourceCode xml"><code class="sourceCode xml"><span class="kw">&lt;?xml</span> version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;<span class="kw">?&gt;</span>
+
+<span class="kw">&lt;?import</span> javafx.scene.control.TextArea<span class="kw">?&gt;</span>
+<span class="kw">&lt;?import</span> javafx.scene.layout.VBox<span class="kw">?&gt;</span>
+
+<span class="kw">&lt;fx:root</span><span class="ot"> type=</span><span class="st">&quot;VBox&quot;</span><span class="ot"> fx:controller=</span><span class="st">&quot;com.github.zelinf.javademo.jfx.MyComponent&quot;</span>
+<span class="ot">         xmlns=</span><span class="st">&quot;http://javafx.com/javafx&quot;</span><span class="ot"> xmlns:fx=</span><span class="st">&quot;http://javafx.com/fxml/1&quot;</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;TextArea</span><span class="ot"> fx:id=</span><span class="st">&quot;upperText&quot;</span><span class="ot"> editable=</span><span class="st">&quot;false&quot;</span><span class="kw">/&gt;</span>
+    <span class="kw">&lt;TextArea</span><span class="ot"> fx:id=</span><span class="st">&quot;editableText&quot;</span><span class="ot"> VBox.vgrow=</span><span class="st">&quot;ALWAYS&quot;</span><span class="kw">/&gt;</span>
+<span class="kw">&lt;/fx:root&gt;</span></code></pre></div>
+<p>Then an corresponding class</p>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java"><span class="kw">package</span><span class="im"> com.github.zelinf.javademo.jfx;</span>
+
+<span class="kw">import</span><span class="im"> javafx.fxml.FXML;</span>
+<span class="kw">import</span><span class="im"> javafx.scene.control.TextArea;</span>
+<span class="kw">import</span><span class="im"> javafx.scene.layout.VBox;</span>
+
+<span class="kw">public</span> <span class="kw">class</span> MyComponent <span class="kw">extends</span> VBox {
+
+    <span class="kw">public</span> <span class="fu">MyComponent</span>() {
+        <span class="co">// A helper method, will be explained</span>
+        <span class="co">// in detail later.</span>
+        FXMLUtils.<span class="fu">loadFXML</span>(<span class="kw">this</span>);
+    }
+
+    <span class="at">@FXML</span>
+    <span class="kw">private</span> <span class="bu">TextArea</span> editableText;
+    <span class="at">@FXML</span>
+    <span class="kw">private</span> <span class="bu">TextArea</span> upperText;
+
+    <span class="at">@FXML</span>
+    <span class="kw">private</span> <span class="dt">void</span> <span class="fu">initialize</span>() {
+        upperText.<span class="fu">textProperty</span>().<span class="fu">bind</span>(editableText.<span class="fu">textProperty</span>());
+    }
+
+}</code></pre></div>
+<p>Code outside may use <code>MyComponent</code> in Java code or in FXML files, just like thoses components existing in standard library.</p>
+<p>There are several things still remain to explain.</p>
+<p>Value of <code>type</code> attribute of <code>&lt;fx:root&gt;</code> MUST be a super class of MyComponent, or you will encounter runtime error.</p>
+<p>My IDE is Intellij IDEA. I set <code>fx:controller</code> field in FXML file, BUT that’s only to tell IDE which class the controller should be. If you don’t set that attribute, the code still works fine, though your IDE may show errors in the FXML file.</p>
+<p>Last thing to note: What does <code>FXMLUtils.loadFXML(this)</code> do.</p>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="dt">static</span> &lt;T <span class="kw">extends</span> Parent&gt; <span class="dt">void</span> <span class="fu">loadFXML</span>(T component) {
+    FXMLLoader loader = <span class="kw">new</span> <span class="fu">FXMLLoader</span>();
+    loader.<span class="fu">setRoot</span>(component);
+    loader.<span class="fu">setControllerFactory</span>(theClass -&gt; component);
+
+    <span class="bu">String</span> fileName = component.<span class="fu">getClass</span>().<span class="fu">getSimpleName</span>() + <span class="st">&quot;.fxml&quot;</span>;
+    <span class="kw">try</span> {
+        loader.<span class="fu">load</span>(component.<span class="fu">getClass</span>().<span class="fu">getResourceAsStream</span>(fileName));
+    } <span class="kw">catch</span> (<span class="bu">IOException</span> e) {
+        <span class="kw">throw</span> <span class="kw">new</span> <span class="bu">RuntimeException</span>(e);
+    }
+}</code></pre></div>
+<p>Copy this method in your project, and make sure your component’s FXML file has corresponding name, it should work smoothly.</p>
+<p>Different from code sample provided by oracle, we can’t use <code>loader.setController</code>. It will throw an runtime exception telling you that the controller is already set, while loading the FXML file. One workaround is to remove the <code>fx:controller</code> attribute in the FXML file, but it will break the IDE’s code checker. Instead, we use <code>setControllerFactory</code> and return <code>component</code> as controller.</p>
+<p>Referencing this class from other FXML files may lead SceneBuilder to crash. This is due to SceneBuilder’s classpath settings. If you use Intellij IDEA like me, you should use the SceneBuilder instance embedded in the IDE, and that problem get fixed automatically. If you wish to use the standalone SceneBuilder, edit its ‘app/SceneBuilder.cfg’ to add path to your class files to <code>app.classpath</code></p>
+<p>To summarize, you need the following steps to create and use a custom component:</p>
+<ul>
+<li>Create a class named <code>YourComponent</code> and put <code>YourComponent.fxml</code> in the same directory.</li>
+<li>Make <code>YourComponent</code> extend some container class, such as <code>AnchorPane</code>, and set the type of <code>fx:root</code> to that container class in the FXML file.</li>
+<li>Call <code>FXMLUtils.loadFXML(this)</code> in <code>YourComponent</code>’s constructor. (Assume you have copied <code>loadFXML</code>)</li>
+<li>Done! You should be able to reference this component from both Java code and other FXML files.</li>
+</ul>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
