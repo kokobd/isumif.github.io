@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Servant Auth 身份验证
+title: Servant Auth (Chinese)
 ---
 
 ## 使用 BasicAuth

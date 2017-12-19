@@ -1,5 +1,5 @@
 ---
-title: 保护开源项目中的敏感数据
+title: Protect Sensitive Data in Open Source Projects (Chinese)
 ---
 
 ## 需求
