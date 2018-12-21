@@ -59,6 +59,9 @@ main = hakyll $ do
 
     match "templates/*" $ compile templateBodyCompiler
 
+    match "google*.html" $ do
+        route   idRoute
+        compile copyFileCompiler
 
 --------------------------------------------------------------------------------
 postCtx :: Context String

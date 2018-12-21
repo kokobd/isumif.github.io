@@ -7,6 +7,7 @@ git stash
 git checkout dev
 
 # Build new files
+stack build
 stack exec site clean
 stack exec site build
 
