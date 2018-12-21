@@ -33,41 +33,41 @@
 <p>BasicAuth是一种基本的http身份验证方法，每次请求时都发送用户名和密码，应当配合https使用。 如同<code>servant</code>的其他组件的使用，我们需要在API中描述BasicAuth，然后实现一个Server</p>
 <p><code>Servant.API.BasicAuth</code>中包含了两个数据类型: <code>BasicAuth realm userData</code>与<code>BasicAuthData</code>。这个模块不用单独导入，只要导入<code>Servant.API</code>即可</p>
 <p>首先自定义你的用户类型，例如</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">User</span> <span class="fu">=</span> <span class="dt">User</span>
-  {<span class="ot"> userName ::</span> <span class="dt">Text</span>
-  ,<span class="ot"> userPwd ::</span> <span class="dt">Text</span>
-  } <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">data</span> <span class="dt">User</span> <span class="fu">=</span> <span class="dt">User</span></a>
+<a class="sourceLine" id="cb1-2" title="2">  {<span class="ot"> userName ::</span> <span class="dt">Text</span></a>
+<a class="sourceLine" id="cb1-3" title="3">  ,<span class="ot"> userPwd ::</span> <span class="dt">Text</span></a>
+<a class="sourceLine" id="cb1-4" title="4">  } <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>)</a></code></pre></div>
 <p>在某个API中类似这样描述身份验证：</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">PrivateAPI</span> <span class="fu">=</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="dt">BasicAuth</span> <span class="st">&quot;some-realm&quot;</span> <span class="dt">User</span> <span class="fu">:&gt;</span> <span class="dt">Get</span> <span class="ch">'[JSON] Integer</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">type</span> <span class="dt">PrivateAPI</span> <span class="fu">=</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="dt">BasicAuth</span> <span class="st">&quot;some-realm&quot;</span> <span class="dt">User</span> <span class="fu">:&gt;</span> <span class="dt">Get</span> '[<span class="dt">JSON</span>] <span class="dt">Integer</span></a></code></pre></div>
 <p><code>Integer</code>可以换成任何你想要返回的数据类型。访问<code>/private</code>时需要进行身份验证。</p>
 <p><strong>注意</strong>：如果要保护<code>/private</code>的子路经，需要在对应API中添加<code>BasicAuth</code>，子路经默认不会被保护。<br />
 例如下面这个API，我们可以不经身份验证访问<code>/private/public</code></p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">BasicAPI</span> <span class="fu">=</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="st">&quot;public&quot;</span> <span class="fu">:&gt;</span> <span class="dt">PublicAPI</span>
-  <span class="fu">:&lt;|&gt;</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="dt">BasicAuth</span> <span class="st">&quot;foo-realm&quot;</span> <span class="dt">User</span> <span class="fu">:&gt;</span> <span class="dt">PrivateAPI</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">type</span> <span class="dt">BasicAPI</span> <span class="fu">=</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="st">&quot;public&quot;</span> <span class="fu">:&gt;</span> <span class="dt">PublicAPI</span></a>
+<a class="sourceLine" id="cb3-2" title="2">  <span class="fu">:&lt;|&gt;</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="dt">BasicAuth</span> <span class="st">&quot;foo-realm&quot;</span> <span class="dt">User</span> <span class="fu">:&gt;</span> <span class="dt">PrivateAPI</span></a></code></pre></div>
 <p>需要保护多个子API时，一种做法是利用含参的类型别名，例如</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">PrivateAPIBase</span> api <span class="fu">=</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="dt">BasicAuth</span> <span class="st">&quot;/private&quot;</span> <span class="dt">User</span> <span class="fu">:&gt;</span> api</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">type</span> <span class="dt">PrivateAPIBase</span> api <span class="fu">=</span> <span class="st">&quot;private&quot;</span> <span class="fu">:&gt;</span> <span class="dt">BasicAuth</span> <span class="st">&quot;/private&quot;</span> <span class="dt">User</span> <span class="fu">:&gt;</span> api</a></code></pre></div>
 <p>现在来实现满足<code>PrivateAPI</code>的Server</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">privateServer ::</span> <span class="dt">Server</span> <span class="dt">PrivateAPI</span>
-privateServer user <span class="fu">=</span> pure (<span class="dv">10</span><span class="ot"> ::</span> <span class="dt">Integer</span>)</code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" title="1"><span class="ot">privateServer ::</span> <span class="dt">Server</span> <span class="dt">PrivateAPI</span></a>
+<a class="sourceLine" id="cb5-2" title="2">privateServer user <span class="fu">=</span> <span class="fu">pure</span> (<span class="dv">10</span><span class="ot"> ::</span> <span class="dt">Integer</span>)</a></code></pre></div>
 <p>这里的<code>Server PrivateAPI</code>的展开类型为<code>User -&gt; Handler Integer</code>，应当是符合预期的。</p>
 <p>到这里还不够，我们还需要给<code>servant</code>提供身份验证的逻辑<br />
 导入<code>Servant.Server</code>模块中的<code>BasicAuthCheck</code>，以及<code>Servant.API</code>模块中的<code>BasicAuthData</code>，我们来写这样一个身份校验函数</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">authCheck ::</span> <span class="dt">BasicAuthCheck</span> <span class="dt">User</span>
-authCheck <span class="fu">=</span> <span class="dt">BasicAuthCheck</span> <span class="fu">$</span> \(<span class="dt">BasicAuthData</span> name_ pwd_) <span class="ot">-&gt;</span>
-  undefined <span class="co">-- write your authentication logic</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" title="1"><span class="ot">authCheck ::</span> <span class="dt">BasicAuthCheck</span> <span class="dt">User</span></a>
+<a class="sourceLine" id="cb6-2" title="2">authCheck <span class="fu">=</span> <span class="dt">BasicAuthCheck</span> <span class="fu">$</span> \(<span class="dt">BasicAuthData</span> name_ pwd_) <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-3" title="3">  <span class="fu">undefined</span> <span class="co">-- write your authentication logic</span></a></code></pre></div>
 <p><code>BasicAuthCheck user</code>是对函数类型<code>BasicAuthData -&gt; IO (BasicAuthResult user)</code>的封装。<br />
 <code>BasicAuthData</code>包裹了前端发送来的用户名和密码（strict <code>ByteString</code>类型），我们利用这个参数来验证用户身份<br />
 <code>BasicAuthResult</code>有4中情况，分别是 + <code>Unauthorized</code> + <code>BadPassword</code> + <code>NoSuchUser</code> + <code>Authorized user</code></p>
 <p>为了让servant能够自动调用这个函数，我们需要利用<code>Servant.Server.Internal.Context</code>。<code>Context</code>是一种将值传递给API里面的组合子的手段，我们这里要把<code>authCheck</code>函数传递给<code>BasicAuth</code>组合子</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">authContext ::</span> <span class="dt">Context</span> <span class="ch">'[BasicAuthCheck User]</span>
-authContext <span class="fu">=</span> authCheck <span class="fu">:.</span> <span class="dt">EmptyContext</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" title="1"><span class="ot">authContext ::</span> <span class="dt">Context</span> '[<span class="dt">BasicAuthCheck</span> <span class="dt">User</span>]</a>
+<a class="sourceLine" id="cb7-2" title="2">authContext <span class="fu">=</span> authCheck <span class="fu">:.</span> <span class="dt">EmptyContext</span></a></code></pre></div>
 <p>最终我们要传递的<code>Context</code>中包裹的是一个类型层面的列表，里面存放各种值的类型。运算符<code>(:.)</code>可以把任意类型的值连接到<code>Context [*]</code>的值上去。使用这个运算符我们就可以组合多个Context了。</p>
 <p>最后，我们用<code>serveWithContext</code>取代<code>serve</code>，它的三个参数分别为 api proxy, context, server，例如：</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">main ::</span> <span class="dt">IO</span> ()
-main <span class="fu">=</span> run <span class="dv">8081</span> <span class="fu">$</span> serveWithContext
-  <span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> <span class="dt">PrivateAPI</span>
-  authContext
-  privateServer</code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" title="1"><span class="ot">main ::</span> <span class="dt">IO</span> ()</a>
+<a class="sourceLine" id="cb8-2" title="2">main <span class="fu">=</span> run <span class="dv">8081</span> <span class="fu">$</span> serveWithContext</a>
+<a class="sourceLine" id="cb8-3" title="3">  <span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> <span class="dt">PrivateAPI</span></a>
+<a class="sourceLine" id="cb8-4" title="4">  authContext</a>
+<a class="sourceLine" id="cb8-5" title="5">  privateServer</a></code></pre></div>
 <h2 id="generalized-authentication">Generalized Authentication</h2>
 <p>TODO</p>
     </section>

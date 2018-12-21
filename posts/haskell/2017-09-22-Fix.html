@@ -33,43 +33,43 @@
 这里我们简要介绍<code>fix</code>与<code>RecursiveDo</code></p>
 <h2 id="fix-函数"><code>fix</code> 函数</h2>
 <p><code>fix</code>函数的定义来自<code>Control.Monad.Fix</code>，这是它的定义：</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a
-fix f <span class="fu">=</span> <span class="kw">let</span> { x <span class="fu">=</span> f x } <span class="kw">in</span> x</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" title="1"><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb1-2" title="2">fix f <span class="fu">=</span> <span class="kw">let</span> { x <span class="fu">=</span> f x } <span class="kw">in</span> x</a></code></pre></div>
 <p>直观地来看，这个定义表示无限多个<code>f</code>依次应用下去</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">f (f (f (f (<span class="fu">...</span>))))</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" title="1">f (f (f (f (<span class="fu">...</span>))))</a></code></pre></div>
 <p>例如，<code>fix (1:) == [1,1..]</code></p>
 <p>如果我们传递给<code>fix</code>的参数<code>f</code>对其参数严格求值，那么<code>fix f</code>一定是无法被计算 的，因为我们永远也无法把一个具体的值提供给<code>f</code>。事实上<code>fix f</code>收敛当且仅当<code>f</code>不严格求值</p>
 <p>另一方面，<code>fix f</code>实际上求的是<code>f</code>的一个“不动点”，即下面的等式成立</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">f (fix f) <span class="fu">=</span> fix f</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" title="1">f (fix f) <span class="fu">=</span> fix f</a></code></pre></div>
 <p>利用这一点我们可以推导，对于任意函数<code>f</code>，如果它能够被递归定义，就能够利用<code>fix</code>取代递归。 即：</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">f ::</span> a <span class="ot">-&gt;</span> b
-f a <span class="fu">=</span> <span class="kw">if</span> p a
-        <span class="kw">then</span> b0
-        <span class="kw">else</span> g f a
-<span class="co">-- 可以被替代为</span>
-f <span class="fu">=</span> fix (\f' a <span class="ot">-&gt;</span>
-  <span class="kw">if</span> p a
-    <span class="kw">then</span> b0
-    <span class="kw">else</span> g f' a)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" title="1"><span class="ot">f ::</span> a <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb4-2" title="2">f a <span class="fu">=</span> <span class="kw">if</span> p a</a>
+<a class="sourceLine" id="cb4-3" title="3">        <span class="kw">then</span> b0</a>
+<a class="sourceLine" id="cb4-4" title="4">        <span class="kw">else</span> g f a</a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="co">-- 可以被替代为</span></a>
+<a class="sourceLine" id="cb4-6" title="6">f <span class="fu">=</span> fix (\f' a <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb4-7" title="7">  <span class="kw">if</span> p a</a>
+<a class="sourceLine" id="cb4-8" title="8">    <span class="kw">then</span> b0</a>
+<a class="sourceLine" id="cb4-9" title="9">    <span class="kw">else</span> g f' a)</a></code></pre></div>
 <p>我们来证明这两种定义是等价的。 先来看类型：</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">p ::</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
-<span class="ot">b0 ::</span> b
-<span class="ot">g ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" title="1"><span class="ot">p ::</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="ot">b0 ::</span> b</a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="ot">g ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</a></code></pre></div>
 <p>记</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">h <span class="fu">=</span> \f' a <span class="ot">-&gt;</span> <span class="kw">if</span> p a
-               <span class="kw">then</span> b0
-               <span class="kw">else</span> g f' a</code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" title="1">h <span class="fu">=</span> \f' a <span class="ot">-&gt;</span> <span class="kw">if</span> p a</a>
+<a class="sourceLine" id="cb6-2" title="2">               <span class="kw">then</span> b0</a>
+<a class="sourceLine" id="cb6-3" title="3">               <span class="kw">else</span> g f' a</a></code></pre></div>
 <p>利用<code>h (fix h) = fix h</code>有</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">f <span class="fu">=</span> fix h
-  <span class="fu">=</span> h (fix h)
-  <span class="fu">=</span> h f
-  <span class="fu">=</span> \a <span class="ot">-&gt;</span> <span class="kw">if</span> p a
-            <span class="kw">then</span> b0
-            <span class="kw">else</span> g f a
-<span class="co">-- 即有</span>
-f a <span class="fu">=</span> <span class="kw">if</span> p a
-        <span class="kw">then</span> b0
-        <span class="kw">else</span> g f a</code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" title="1">f <span class="fu">=</span> fix h</a>
+<a class="sourceLine" id="cb7-2" title="2">  <span class="fu">=</span> h (fix h)</a>
+<a class="sourceLine" id="cb7-3" title="3">  <span class="fu">=</span> h f</a>
+<a class="sourceLine" id="cb7-4" title="4">  <span class="fu">=</span> \a <span class="ot">-&gt;</span> <span class="kw">if</span> p a</a>
+<a class="sourceLine" id="cb7-5" title="5">            <span class="kw">then</span> b0</a>
+<a class="sourceLine" id="cb7-6" title="6">            <span class="kw">else</span> g f a</a>
+<a class="sourceLine" id="cb7-7" title="7"><span class="co">-- 即有</span></a>
+<a class="sourceLine" id="cb7-8" title="8">f a <span class="fu">=</span> <span class="kw">if</span> p a</a>
+<a class="sourceLine" id="cb7-9" title="9">        <span class="kw">then</span> b0</a>
+<a class="sourceLine" id="cb7-10" title="10">        <span class="kw">else</span> g f a</a></code></pre></div>
 <p>与前面的递归定义比较，发现完全一致，这就表明递归定义可以转换为<code>fix</code>定义。另一方面， 由于<code>fix</code>本身是由递归定义的，所以<code>fix</code>定义也可以转换为递归定义。这就证明了两种定义方法 是等价的。因此理论上说我们可以在语言中放弃递归，转而提供<code>fix</code>作为最基本的语言特性</p>
 <h3 id="further-reading">Further Reading</h3>
 <p><a href="https://en.wikibooks.org/wiki/Haskell/Denotational_semantics">Denotational Semantics</a></p>

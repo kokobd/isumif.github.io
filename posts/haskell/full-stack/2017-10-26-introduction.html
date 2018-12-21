@@ -40,7 +40,7 @@
 <li>server - contains a <code>stack.yaml</code></li>
 </ul>
 <p>Now let’s focus on client-side code.</p>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li>Install a recent version of Node.js</li>
 <li><code>stack new</code> or directly create the project by hand. We need to tell stack to <a href="https://docs.haskellstack.org/en/stable/ghcjs/">use GHSJS over regular GHC</a></li>
 <li>Run <code>stack setup</code>. It will take 30 minutes or more, as <code>stack</code> compiles GHCJS from source in this stage.</li>
@@ -49,7 +49,7 @@
 <li>Open <code>index.html</code> in your browser, you should see a working client-side application.</li>
 </ol>
 <p>During development, we prefer GHCJSi, an interactive environment like GHCi.</p>
-<ol style="list-style-type: decimal">
+<ol type="1">
 <li>Add <code>maini = clearBody &gt;&gt; main</code> to your <code>Main.hs</code>. Import <code>Miso.Dev</code> if you didn’t.</li>
 <li>Run <code>npm install socket.io</code> in your <code>client</code> project root. <code>socket.io</code> is needed by GHCJSi to interact with the browser.</li>
 <li>Run <code>export NODE_PATH=$(pwd)/node_modules</code></li>

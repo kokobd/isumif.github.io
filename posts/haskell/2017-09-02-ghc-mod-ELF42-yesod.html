@@ -45,8 +45,8 @@ ghc-mod: .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Settings.o: unknown 
 <p><code>binutils-2.26</code> (or some newer version) uses a new ELF relocation type, which ghc-mod can’t identify.</p>
 <h2 id="solution">Solution</h2>
 <p>One possible workaround is to compile packages that suffer this problem with ghc option <code>-opta-Wa,-mrelax-relocations=no</code> (no spaces after the comma). Detailed steps: 1. Identify which package suffers. From the error message above, we see it’s <code>yaml-0.8.23.3</code> in this case. (But it might be other packages) 2. Add</p>
-<div class="sourceCode"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span class="fu">ghc-options:</span>
-  <span class="fu">yaml:</span><span class="at"> -opta-Wa,-mrelax-relocations=no</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb2-1" title="1"><span class="fu">ghc-options:</span></a>
+<a class="sourceLine" id="cb2-2" title="2">  <span class="fu">yaml:</span><span class="at"> -opta-Wa,-mrelax-relocations=no</span></a></code></pre></div>
 <p>to your <code>stack.yaml</code>. The options will be passed to ghc while recompiling <code>yaml</code> 3. Force a recompilation</p>
 <pre><code>stack exec -- ghc-pkg unregister yaml --force
 stack build --force-dirty</code></pre>
