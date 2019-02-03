@@ -1,4 +1,6 @@
-# Announcing cabal-bundle-clib
+---
+title: Announcing cabal-bundle-clib
+---
 
 Today I put the first release of `cabal-bundle-clib` to Hackage. This library
 makes bundling C/C++ projects in Cabal packages easier.
