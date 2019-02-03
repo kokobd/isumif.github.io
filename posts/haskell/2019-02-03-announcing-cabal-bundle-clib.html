@@ -53,9 +53,18 @@
 <p>The library is extensible. You can write your own builder if your C project doesn’t use CMake, or has some complex build process. The provided <code>simpleCMakeBuilder</code> is a good example to get started.</p>
 <p>Furthermore, there are several example packages provided. - <code>example-app</code> An application that bundles C code. - <code>example-lib</code> A library that bundled C Code. - <code>example-lib-consumer</code> An application that depends on <code>example-lib</code>, but has no knowledge of the C code used in <code>example-lib</code></p>
 <h3 id="compatibility">Compatibility</h3>
-<p>This library is tested against: - Cabal and cabal-install 2.4.1.0, using v2 build - stack 1.9.1 with <code>lts-13.0</code> - cmake 3.13.2</p>
+<p>This library is tested against:</p>
+<ul>
+<li>Cabal and cabal-install 2.4.1.0, using v2 build</li>
+<li>stack 1.9.1 with <code>lts-13.0</code></li>
+<li>cmake 3.13.2</li>
+</ul>
 <h2 id="motivation">Motivation</h2>
-<p>Traditionally, there are two ways to organize a project that contains both Haskell and C code - List the C files in <code>c-sources</code> of Cabal file, and let cabal build them - Build and install the C project manually (or use external package managers, such as <code>apt</code>), then list the relative installation path in <code>extra-lib-dirs</code></p>
+<p>Traditionally, there are two ways to organize a project that contains both Haskell and C code</p>
+<ul>
+<li>List the C files in <code>c-sources</code> of Cabal file, and let cabal build them</li>
+<li>Build and install the C project manually (or use external package managers, such as <code>apt</code>), then list the relative installation path in <code>extra-lib-dirs</code></li>
+</ul>
 <p>However, neither way is perfect. With the first method, we are forced to let Cabal build the C code, and you may want to use CMake, for example. And if you are trying to bundle a third-party C library with its own build system, this approach won’t work. With the second method, the build process of the C project is not managed by Cabal. You have to make sure the libraries are properly installed on the system. What’s worse, an application developer have to take care of any C libraries used by the Haskell libraries he/she use, even transitive dependencies. For example, to use the library <code>hmatrix</code>, whether directly or indirectly, you will have to install <code>libblas</code> <code>liblapack</code>, etc.</p>
 <p>So, we want an approach to bundle a C project inside a Cabal package. The package developer can edit the C code at any time, and cabal should detect the changes and trigger incremental build. Just as if he/she is editing Haskell code. If the package is a library, then for consumers of the package, they do not need to know there exists some C code in that library.</p>
 <p>There is a <a href="https://codinginfinity.me/post/2015-04-18/haskell_and_cpp">blog</a> providing some basic ideas of this approach. It makes the C code transparent to library users. However, using the exact code posted in that blog, the development process is not satisfactory. It builds the C code in <code>configure</code> stage due to some ‘limitations’ of Cabal, which means <code>cabal v2-build</code> will not trigger an incremental build of the C code. Based on that blog, I improved the implementation to satisfy the requirements stated above.</p>
