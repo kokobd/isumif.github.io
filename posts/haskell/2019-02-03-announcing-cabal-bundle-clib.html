@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>My Hakyll Blog - Announcing cabal-bundle-clib</title>
+        <link rel="stylesheet" href="../../css/default.css" />
+        <link rel="stylesheet" href="../../css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../../">My Hakyll Blog</a>
+            </div>
+            <nav>
+                <a href="../../">Home</a>
+                <a href="../../about.html">About</a>
+                <a href="../../contact.html">Contact</a>
+                <a href="../../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>Announcing cabal-bundle-clib</h1>
+            <article>
+    <section class="header">
+        Posted on February  3, 2019
+        
+    </section>
+    <section>
+        <p>Today I put the first release of <code>cabal-bundle-clib</code> to Hackage. This library makes bundling C/C++ projects in Cabal packages easier.</p>
+<p>(<em>The code doesn’t need to be in C or C++, it just has to expose a C ABI</em>)</p>
+<h2 id="usage">Usage</h2>
+<p>Add a custom setup stanza to your Cabal file:</p>
+<pre class="cabal"><code>custom-setup
+  setup-depends:
+      base
+    , Cabal
+    , cabal-bundle-clib</code></pre>
+<p>Replace your default <code>Setup.hs</code> with the following code:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">import</span>           <span class="dt">Development.CabalBundleCLib</span>       (mainWithCLib)</a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="kw">import</span>           <span class="dt">Development.CabalBundleCLib.CMake</span> (simpleCMakeBuilder)</a>
+<a class="sourceLine" id="cb2-3" title="3"></a>
+<a class="sourceLine" id="cb2-4" title="4"><span class="ot">main ::</span> <span class="dt">IO</span> ()</a>
+<a class="sourceLine" id="cb2-5" title="5">main <span class="fu">=</span> mainWithCLib</a>
+<a class="sourceLine" id="cb2-6" title="6">  <span class="st">&quot;cpp_proj&quot;</span> <span class="co">-- C project root directory, relative to package root directory</span></a>
+<a class="sourceLine" id="cb2-7" title="7">  [<span class="st">&quot;mycpplib&quot;</span>] <span class="co">-- C library names</span></a>
+<a class="sourceLine" id="cb2-8" title="8">  [<span class="st">&quot;.&quot;</span>] <span class="co">-- Direct parent dirs for built libraries, relative to build root dir.</span></a>
+<a class="sourceLine" id="cb2-9" title="9">  simpleCMakeBuilder <span class="co">-- The builder</span></a></code></pre></div>
+<p>For now, we only provide one builder: <code>simpleCMakeBuilder</code>. This builder basically calls <code>cmake --build</code>, and doesn’t take care of <code>cmake install</code>.</p>
+<p><strong>NOTE</strong> External native libraries, such as <code>stdc++</code>, still need to be listed in <code>extra-libraries</code> as normal.</p>
+<p>The library is extensible. You can write your own builder if your C project doesn’t use CMake, or has some complex build process. The provided <code>simpleCMakeBuilder</code> is a good example to get started.</p>
+<p>Furthermore, there are several example packages provided. - <code>example-app</code> An application that bundles C code. - <code>example-lib</code> A library that bundled C Code. - <code>example-lib-consumer</code> An application that depends on <code>example-lib</code>, but has no knowledge of the C code used in <code>example-lib</code></p>
+<h3 id="compatibility">Compatibility</h3>
+<p>This library is tested against: - Cabal and cabal-install 2.4.1.0, using v2 build - stack 1.9.1 with <code>lts-13.0</code> - cmake 3.13.2</p>
+<h2 id="motivation">Motivation</h2>
+<p>Traditionally, there are two ways to organize a project that contains both Haskell and C code - List the C files in <code>c-sources</code> of Cabal file, and let cabal build them - Build and install the C project manually (or use external package managers, such as <code>apt</code>), then list the relative installation path in <code>extra-lib-dirs</code></p>
+<p>However, neither way is perfect. With the first method, we are forced to let Cabal build the C code, and you may want to use CMake, for example. And if you are trying to bundle a third-party C library with its own build system, this approach won’t work. With the second method, the build process of the C project is not managed by Cabal. You have to make sure the libraries are properly installed on the system. What’s worse, an application developer have to take care of any C libraries used by the Haskell libraries he/she use, even transitive dependencies. For example, to use the library <code>hmatrix</code>, whether directly or indirectly, you will have to install <code>libblas</code> <code>liblapack</code>, etc.</p>
+<p>So, we want an approach to bundle a C project inside a Cabal package. The package developer can edit the C code at any time, and cabal should detect the changes and trigger incremental build. Just as if he/she is editing Haskell code. If the package is a library, then for consumers of the package, they do not need to know there exists some C code in that library.</p>
+<p>There is a <a href="https://codinginfinity.me/post/2015-04-18/haskell_and_cpp">blog</a> providing some basic ideas of this approach. It makes the C code transparent to library users. However, using the exact code posted in that blog, the development process is not satisfactory. It builds the C code in <code>configure</code> stage due to some ‘limitations’ of Cabal, which means <code>cabal v2-build</code> will not trigger an incremental build of the C code. Based on that blog, I improved the implementation to satisfy the requirements stated above.</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
