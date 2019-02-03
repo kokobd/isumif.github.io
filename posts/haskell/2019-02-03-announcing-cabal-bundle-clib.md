@@ -50,6 +50,7 @@ Furthermore, there are several example packages provided.
 ### Compatibility
 
 This library is tested against:
+
 - Cabal and cabal-install 2.4.1.0, using v2 build
 - stack 1.9.1 with `lts-13.0`
 - cmake 3.13.2
@@ -58,6 +59,7 @@ This library is tested against:
 
 Traditionally, there are two ways to organize a project that contains both
 Haskell and C code
+
 - List the C files in `c-sources` of Cabal file, and let cabal build them
 - Build and install the C project manually (or use external package managers,
   such as `apt`), then list the relative installation path in `extra-lib-dirs`
