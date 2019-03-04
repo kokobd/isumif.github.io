@@ -1,5 +1,6 @@
 ---
 title: About
 ---
-I'm a sophomore in Sun Yat-sen's University, majoring Computer Science.
-Of all languages, I love Haskell most.
+I'm enthusiastic about functional programming, especially Haskell. So this blog
+contains some Haskell bits, but is not limited to that. Anything related to 
+programming may be posted here.
