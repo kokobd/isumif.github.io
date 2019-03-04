@@ -30,15 +30,15 @@
     </section>
     <section>
         <ul>
-<li>Get key id: <code>gpg --list-secret-keys</code></li>
-<li>Export private key: <code>gpg --export-secret-keys -a keyid &gt; private_key.asc</code></li>
+<li>Get key id: <code>gpg --list-secret-keys</code>. <code>$KEYID</code> is assumed to be the key id.</li>
+<li>Export private key: <code>gpg --export-secret-keys -a $KEYID &gt; private_key.asc</code></li>
 <li>Export public key: <code>gpg --export -a keyid &gt; public_key.asc</code></li>
 <li>Import private key: <code>gpg --import private_key.asc</code></li>
 <li>Trust the key: <code>gpg --edit-key foo@bar.com</code>. Type in the command <code>trust</code>, then select “I trust ultimately”. Use <code>quit</code> to quit.</li>
 </ul>
 <p>Configure git to use the GPG key, and sign commits automatically:</p>
 <ul>
-<li><code>git config --global user.signingkey</code></li>
+<li><code>git config --global user.signingkey $KEYID</code></li>
 <li><code>git config --global commit.gpgSign true</code></li>
 </ul>
     </section>
