@@ -24,12 +24,12 @@
         <main role="main">
             <h1>Creating Custom Components in JavaFX</h1>
             <article>
-    <section class="header">
-        Posted on December 19, 2017
-        
-    </section>
-    <section>
-        <h2 id="motivation">Motivation</h2>
+  <section class="header">
+    Posted on December 19, 2017
+    
+  </section>
+  <section>
+    <h2 id="motivation">Motivation</h2>
 <p>Recently I’m using JavaFX to build a desktop GUI application. It took me some time to figure out how to split my GUI into components properly. Here is the final solution that works elegantly for me.</p>
 <h2 id="solution">Solution</h2>
 <p>According to <a href="https://docs.oracle.com/javase/8/javafx/api/javafx/fxml/doc-files/introduction_to_fxml.html#custom_components">Oracle’s reference</a>, we prepare a FXML file like this</p>
@@ -96,9 +96,8 @@
 <li>Call <code>FXMLUtils.loadFXML(this)</code> in <code>YourComponent</code>’s constructor. (Assume you have copied <code>loadFXML</code>)</li>
 <li>Done! You should be able to reference this component from both Java code and other FXML files.</li>
 </ul>
-    </section>
+  </section>
 </article>
-
         </main>
 
         <footer>

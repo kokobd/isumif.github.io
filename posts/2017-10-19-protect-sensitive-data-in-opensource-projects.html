@@ -24,12 +24,12 @@
         <main role="main">
             <h1>Protect Sensitive Data in Open Source Projects (Chinese)</h1>
             <article>
-    <section class="header">
-        Posted on October 19, 2017
-        
-    </section>
-    <section>
-        <h2 id="需求">需求</h2>
+  <section class="header">
+    Posted on October 19, 2017
+    
+  </section>
+  <section>
+    <h2 id="需求">需求</h2>
 <p>我们的一个项目中由于包含一段机密字符串，所以无法开源。现在希望在不公开这段字符串的前提下， 开源到GitHub，享受到<code>Travis CI</code>和<code>AppVeyor</code>对于开源项目提供的免费持续集成服务。</p>
 <p>具体来说，代码中存在这样一个常量</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" title="1"><span class="ot">defIV ::</span> <span class="dt">B.ByteString</span></a>
@@ -76,9 +76,8 @@
 <code>Travis CI</code> 在构建我们的项目时，会解密这段密文，设置环境变量<code>IV</code>。<br />
 只有<code>Travis CI</code>才能解密这段密文，所以即使项目开源了，也没有人能看到这段密文对应的明文。</p>
 <p>再利用 <code>Travis CI</code> 提供的自动部署服务，我们可以把编译好的app自动部署到私有服务器上。</p>
-    </section>
+  </section>
 </article>
-
         </main>
 
         <footer>

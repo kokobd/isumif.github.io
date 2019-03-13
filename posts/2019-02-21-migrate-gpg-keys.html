@@ -24,12 +24,12 @@
         <main role="main">
             <h1>GPG key migration quick guide</h1>
             <article>
-    <section class="header">
-        Posted on February 21, 2019
-        
-    </section>
-    <section>
-        <ul>
+  <section class="header">
+    Posted on February 21, 2019
+    
+  </section>
+  <section>
+    <ul>
 <li>Get key id: <code>gpg --list-secret-keys</code>. <code>$KEYID</code> is assumed to be the key id.</li>
 <li>Export private key: <code>gpg --export-secret-keys -a $KEYID &gt; private_key.asc</code></li>
 <li>Export public key: <code>gpg --export -a keyid &gt; public_key.asc</code></li>
@@ -41,9 +41,8 @@
 <li><code>git config --global user.signingkey $KEYID</code></li>
 <li><code>git config --global commit.gpgSign true</code></li>
 </ul>
-    </section>
+  </section>
 </article>
-
         </main>
 
         <footer>
