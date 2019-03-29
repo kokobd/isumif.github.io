@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>My Hakyll Blog - CUDA 新手入门配置 (CMake)</title>
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">My Hakyll Blog</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <h1>CUDA 新手入门配置 (CMake)</h1>
+            <article>
+  <section class="header">
+    Posted on March 28, 2019
+    
+  </section>
+  <section>
+    <h2 id="cmake">CMake</h2>
+<p>从CMake 3.10开始，FindCuda被弃用，转而把CUDA作为一种和C++同等地位的语言来支持，我们只需要在<code>project</code>命令的<code>LANGUAGES</code>列表里面写上<code>CUDA</code>即可。例如：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cmake"><code class="sourceCode cmake"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">project</span>(cuda_demo <span class="ot">LANGUAGES</span> <span class="ot">CUDA</span> <span class="ot">CXX</span>)</a></code></pre></div>
+<p>然后，<code>CUDA</code>源代码文件名后缀采用<code>cu</code>，像其他C++文件一样列在<code>add_executable</code>/<code>add_library</code>的列表里面就可以了</p>
+<h2 id="特殊头文件">特殊头文件</h2>
+<p>CUDA的IDE支持比较糟糕。CLion没有提供官方支持，Nvidia宣称支持Visual Studio，但是对于<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>语法会报错（实际编译时不会报错），是因为这些IDE的实时提示功能不完全支持CUDA的语法。但我们有一系列的方法，可以让IDE不弹出恼人的错误提示</p>
+<p>首先，在<code>*.cu</code>文件顶部添加这两个头文件包含</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb2-1" title="1"><span class="pp">#include </span><span class="im">&lt;cuda_runtime.h&gt;</span></a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="pp">#include </span><span class="im">&lt;device_launch_parameters.h&gt;</span></a></code></pre></div>
+<p>这样，对于<code>threadIdx</code>等内置变量，<code>cudaMalloc</code>等函数，IDE就可以正确识别了 为了让CMake能找到这两个头文件，你可能还需要在<code>CMakeLists.txt</code>中添加一条<code>target_include_directories</code>，例如：</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cmake"><code class="sourceCode cmake"><a class="sourceLine" id="cb3-1" title="1"><span class="co"># cuda_demo 是某个包含cuda代码的target（可执行文件或库等）</span></a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="kw">target_include_directories</span>(cuda_demo</a>
+<a class="sourceLine" id="cb3-3" title="3">  <span class="ot">PRIVATE</span> <span class="dv">${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}</span></a>
+<a class="sourceLine" id="cb3-4" title="4">  )</a></code></pre></div>
+<p>完整的示例<code>CMakeLists.txt</code>。这里项目名是<code>cuda_demo</code>，有一个可执行目标，名称也是<code>cuda_demo</code></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cmake"><code class="sourceCode cmake"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> 3.13)</a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="kw">project</span>(cuda_demo <span class="ot">LANGUAGES</span> <span class="ot">CUDA</span> <span class="ot">C</span> <span class="ot">CXX</span>)</a>
+<a class="sourceLine" id="cb4-3" title="3"></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="kw">set</span>(<span class="dv">CMAKE_CXX_STANDARD</span> 14)</a>
+<a class="sourceLine" id="cb4-5" title="5"></a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="kw">add_executable</span>(cuda_demo</a>
+<a class="sourceLine" id="cb4-7" title="7">        src/main.cu</a>
+<a class="sourceLine" id="cb4-8" title="8">        )</a>
+<a class="sourceLine" id="cb4-9" title="9"><span class="kw">target_include_directories</span>(cuda_demo</a>
+<a class="sourceLine" id="cb4-10" title="10">        <span class="ot">PRIVATE</span> <span class="dv">${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}</span></a>
+<a class="sourceLine" id="cb4-11" title="11">        )</a></code></pre></div>
+<h2 id="项目创建和编译">项目创建和编译</h2>
+<p>首先创建一个文件夹<code>cuda-demo</code>，然后在里面创建文件<code>CMakeLists.txt</code>，把上面的<code>CMakeLists.txt</code>的内容粘贴进去。创建子目录<code>src</code>，在里面创建源代码文件<code>main.cu</code>。你可以在<code>main.cu</code>里写一个简单的C++ Hello world。</p>
+<p>除非IDE较好地支持CMake，不然需要手动调用CMake创建特定的工程文件。以Visual Studio 2017为例。</p>
+<ul>
+<li>创建编译目录：在<code>cuda-demo</code>里面创建目录<code>cmake-build</code></li>
+<li>进入<code>cmake-build</code>目录，打开命令行，执行<code>cmake .. -G &quot;Visual Studio 15 2017 Win64&quot; -DCMAKE_BUILD_TYPE=Debug</code></li>
+<li>如果没有错误，将会在当前目录看到Visual Studio的工程文件。找到后缀名为<code>sln</code>的文件，用Visual Studio打开（正常情况下双击即可），然后会在Visual Studio里打开这个解决方案</li>
+<li>Visual Studio显示有多个project，我们现在想要运行<code>cuda_demo</code>，所以把<code>cuda_demo</code>项目设置为启动项目，然后点击上面的绿色箭头运行，即可开始编译并运行</li>
+<li>以后如果需要添加源代码文件，需要去<code>cuda-demo/src</code>目录下创建文件（不要直接在Visual Studio里创建），然后把文件名添加到<code>add_executable</code>下面。再在Visual Studio里面执行一次编译，或者重新调用CMake，就可以在Visual Studio里面看到这个文件了</li>
+</ul>
+<p>注意事项：如果需要修改CMake的命令行参数，则须清空<code>cmake-build</code>目录，才能重新执行<code>cmake</code>。而如果命令行参数没有变，只是修改了<code>CMakeLists.txt</code>，直接在原来的<code>cmake-build</code>目录下执行<code>cmake</code>即可。</p>
+<h2 id="cuda-核函数调用语法的处理">CUDA 核函数调用语法的处理</h2>
+<p>CUDA的核函数调用采用特殊语法<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>，如果直接写在IDE里面会报错。另外，<code>__global__</code>等关键字有事也会报警告。我们可以用这样一个宏来解决</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb5-1" title="1"><span class="pp">#if defined(__JETBRAINS_IDE__) || defined(__INTELLISENSE__)</span></a>
+<a class="sourceLine" id="cb5-2" title="2"></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="pp">#define _</span>_global__</a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="pp">#define _</span>_device__</a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="pp">#define _</span>_host__</a>
+<a class="sourceLine" id="cb5-6" title="6"></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="pp">#define DEVICE_CALL</span>(f,<span class="pp"> </span>m,<span class="pp"> </span>n)<span class="pp"> </span>f</a>
+<a class="sourceLine" id="cb5-8" title="8"></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="pp">#else</span></a>
+<a class="sourceLine" id="cb5-10" title="10"></a>
+<a class="sourceLine" id="cb5-11" title="11"><span class="pp">#define DEVICE_CALL</span>(f,<span class="pp"> </span>m,<span class="pp"> </span>n)<span class="pp"> </span>f&lt;&lt;&lt;(m),<span class="pp"> </span>(n)&gt;&gt;&gt;</a>
+<a class="sourceLine" id="cb5-12" title="12"></a>
+<a class="sourceLine" id="cb5-13" title="13"><span class="pp">#endif</span></a></code></pre></div>
+<p>下面举例说明如何使用。假定我们有核函数<code>vector_add</code></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb6-1" title="1">__global__</a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="dt">void</span> vector_add(<span class="at">const</span> <span class="dt">double</span> *a, <span class="at">const</span> <span class="dt">double</span> *b, <span class="dt">double</span> *c) {</a>
+<a class="sourceLine" id="cb6-3" title="3">  <span class="co">// ...</span></a>
+<a class="sourceLine" id="cb6-4" title="4">}</a></code></pre></div>
+<p>使用<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>语法，这样调用这个函数：</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb7-1" title="1">vector_add&lt;&lt;&lt;blocks, threadsPerBlock&gt;&gt;&gt;(dev_a, dev_b, dev_c);</a>
+<a class="sourceLine" id="cb7-2" title="2"><span class="co">// blocks 和 threadsPerBlock 分别表示块的数量和每块内的线程数量</span></a></code></pre></div>
+<p>用上面的宏来改写：</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb8-1" title="1">DEVICE_CALL(vector_add, blocks, threadsPerBlock)(dev_a, dev_b, dev_c);</a></code></pre></div>
+<p>可以看到，<code>DEVICE_CALL</code>有三个参数，第一个是核函数名，后两个是原先<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>的两个参数。接着，后面重新用一组小括号括住<code>vector_add</code>本身的参数</p>
+  </section>
+</article>
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
